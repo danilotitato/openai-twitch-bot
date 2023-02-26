@@ -1,24 +1,44 @@
 require('dotenv').config();
 const tmi = require('tmi.js');
+const { Configuration, OpenAIApi } = require("openai");
 
 const {
   TWITCH_BOT_USERNAME,
   TWITCH_OAUTH_TOKEN,
   TWITCH_CHANNEL,
+  OPENAI_API_KEY,
 } = process.env;
 
-
 const twitchOpts = {
-  options: { debug: true, messagesLogLevel: "info" },
-  connection: {
-      reconnect: true,
-      secure: true
-  },
+    options: { debug: true, messagesLogLevel: "info" },
+    connection: {
+        reconnect: true,
+        secure: true
+    },
   identity: {
     username: TWITCH_BOT_USERNAME,
     password: TWITCH_OAUTH_TOKEN,
   },
   channels: [TWITCH_CHANNEL],
+};
+
+const configuration = new Configuration({
+  apiKey: OPENAI_API_KEY,
+});
+
+const openai = new OpenAIApi(configuration);
+
+const openaiParams = {
+  engine: 'davinci',
+  model: 'text-davinci-002',
+  prompt: '',
+  maxTokens: 100,
+  temperature: 0.7,
+  topP: 1,
+  frequencyPenalty: 0,
+  presencePenalty: 0,
+  stop: '\n',
+  user: 'twitch_chatbot'
 };
 
 const maxResponseLength = 500;
@@ -29,15 +49,32 @@ client.on('connected', (address, port) => {
   console.log(`Bot connected to ${address}:${port}`);
 });
 
-client.on('message', (channel, tags, message, self) => {
-  if (self) { return; }
+client.on('message', async (channel, tags, message, self) => {
+    if (self) { return; }
 
   const botUsername = twitchOpts.identity.username.toLowerCase();
 
   // Just answer if it mentions the bot
   if (!message.toLowerCase().includes(`@${botUsername}`)) { return; }
 
-  client.say(channel, `Hi @${tags.username}!`);
+  // Extract the prompt
+  const prompt = message.replace(new RegExp(`@${botUsername}\\s*`), '');
+
+  const completion = await openai.createCompletion({
+    ...openaiParams,
+    prompt
+  })
+
+  const response = completion.choices[0].text.trim();
+
+  // Add user mention
+  const mentionedResponse = `@${tags.username}, ${response}`;
+
+  // Limit the response length
+  const limitedResponse = mentionedResponse.slice(0, maxResponseLength);
+
+  // Send the response back to the chat
+  client.say(channel, limitedResponse);
 });
 
 // Connect to Twitch
