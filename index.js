@@ -32,11 +32,12 @@ const openai = new OpenAIApi(configuration);
 
 const openaiParams = {
     model: 'text-davinci-002',
-    max_tokens: 150,
+    max_tokens: 500,
     temperature: 0.7,
     frequency_penalty: 0,
     presence_penalty: 0,
-    user: 'twitch_chatbot'
+    user: 'twitch_chatbot',
+    format: 'text'
 };
 
 const maxResponseLength = 500;
