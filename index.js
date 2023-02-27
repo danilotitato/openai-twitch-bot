@@ -29,15 +29,11 @@ const configuration = new Configuration({
 const openai = new OpenAIApi(configuration);
 
 const openaiParams = {
-  engine: 'davinci',
   model: 'text-davinci-002',
-  prompt: '',
-  maxTokens: 100,
+  max_tokens: 150,
   temperature: 0.7,
-  topP: 1,
-  frequencyPenalty: 0,
-  presencePenalty: 0,
-  stop: '\n',
+  frequency_penalty: 0,
+  presence_penalty: 0,
   user: 'twitch_chatbot'
 };
 
@@ -65,7 +61,7 @@ client.on('message', async (channel, tags, message, self) => {
     prompt
   })
 
-  const response = completion.choices[0].text.trim();
+  const response = completion.data.choices[0].text.trim();
 
   // Add user mention
   const mentionedResponse = `@${tags.username}, ${response}`;
