@@ -59,21 +59,26 @@ client.on('message', async (channel, tags, message, self) => {
     // Extract the prompt
     const prompt = message.replace(new RegExp(`@${botUsername}\\s*`), '');
 
-    const completion = await openai.createCompletion({
-        ...openaiParams,
-        prompt
-    })
+    try {
+        const completion = await openai.createCompletion({
+            ...openaiParams,
+            prompt
+        })
 
-    const response = completion.data.choices[0].text.trim();
+        const response = completion.data.choices[0].text.trim();
 
-    // Add user mention
-    const mentionedResponse = `@${tags.username}, ${response}`;
+        // Add user mention
+        const mentionedResponse = `@${tags.username}, ${response}`;
 
-    // Limit the response length
-    const limitedResponse = mentionedResponse.slice(0, maxResponseLength);
+        // Limit the response length
+        const limitedResponse = mentionedResponse.slice(0, maxResponseLength);
 
-    // Send the response back to the chat
-    client.say(channel, limitedResponse);
+        // Send the response back to the chat
+        client.say(channel, limitedResponse);
+    } catch (err) {
+        console.error(err);
+        client.say(channel, 'Sorry, an error occurred');
+    }
 });
 
 // Connect to Twitch
